@@ -1,19 +1,20 @@
 #[macro_use]
+extern crate core;
 extern crate proptest;
 extern crate strength_reduce;
 
+use core::num:: { NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize };
 use proptest::test_runner::Config;
 use strength_reduce::{StrengthReducedU8, StrengthReducedU16, StrengthReducedU32, StrengthReducedU64, StrengthReducedUsize, StrengthReducedU128};
 
-
 macro_rules! reduction_proptest {
-    ($test_name:ident, $struct_name:ident, $primitive_type:ident) => (
+    ($test_name:ident, $struct_name:ident, $primitive_type:ident, $non_zero_type:ident) => (
         mod $test_name {
             use super::*;
             use proptest::sample::select;
 
             fn assert_div_rem_equivalence(divisor: $primitive_type, numerator: $primitive_type) {
-                let reduced_divisor = $struct_name::new(divisor);
+                let reduced_divisor = $struct_name::new($non_zero_type::new(divisor).unwrap());
                 let expected_div = numerator / divisor;
                 let expected_rem = numerator % divisor;
                 let reduced_div = numerator / reduced_divisor;
@@ -52,20 +53,20 @@ macro_rules! reduction_proptest {
         }
     )
 }
-reduction_proptest!(strength_reduced_u08, StrengthReducedU8, u8);
-reduction_proptest!(strength_reduced_u16, StrengthReducedU16, u16);
-reduction_proptest!(strength_reduced_u32, StrengthReducedU32, u32);
-reduction_proptest!(strength_reduced_u64, StrengthReducedU64, u64);
-reduction_proptest!(strength_reduced_usize, StrengthReducedUsize, usize);
-reduction_proptest!(strength_reduced_u128, StrengthReducedU128, u128);
+reduction_proptest!(strength_reduced_u08, StrengthReducedU8, u8, NonZeroU8);
+reduction_proptest!(strength_reduced_u16, StrengthReducedU16, u16, NonZeroU16);
+reduction_proptest!(strength_reduced_u32, StrengthReducedU32, u32, NonZeroU32);
+reduction_proptest!(strength_reduced_u64, StrengthReducedU64, u64, NonZeroU64);
+reduction_proptest!(strength_reduced_usize, StrengthReducedUsize, usize, NonZeroUsize);
+reduction_proptest!(strength_reduced_u128, StrengthReducedU128, u128, NonZeroU128);
 
 macro_rules! exhaustive_test {
-    ($test_name:ident, $struct_name:ident, $primitive_type:ident) => (
+    ($test_name:ident, $struct_name:ident, $primitive_type:ident, $non_zero_type:ident) => (
     	#[test]
     	#[ignore]
     	fn $test_name() {
     		for divisor in 1..=std::$primitive_type::MAX {
-    			let reduced_divisor = $struct_name::new(divisor);
+    			let reduced_divisor = $struct_name::new($non_zero_type::new(divisor).unwrap());
 
     			for numerator in 0..=std::$primitive_type::MAX {
     				let expected_div = numerator / divisor;
@@ -86,5 +87,5 @@ macro_rules! exhaustive_test {
     )
 }
 
-exhaustive_test!(test_strength_reduced_u08_exhaustive, StrengthReducedU8, u8);
-exhaustive_test!(test_strength_reduced_u16_exhaustive, StrengthReducedU16, u16);
+exhaustive_test!(test_strength_reduced_u08_exhaustive, StrengthReducedU8, u8, NonZeroU8);
+exhaustive_test!(test_strength_reduced_u16_exhaustive, StrengthReducedU16, u16, NonZeroU16);
