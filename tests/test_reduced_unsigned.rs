@@ -1,9 +1,8 @@
 #[macro_use]
-extern crate core;
 extern crate proptest;
 extern crate strength_reduce;
 
-use core::num:: { NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize };
+use std::num:: { NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize };
 use proptest::test_runner::Config;
 use strength_reduce::{StrengthReducedU8, StrengthReducedU16, StrengthReducedU32, StrengthReducedU64, StrengthReducedUsize, StrengthReducedU128};
 

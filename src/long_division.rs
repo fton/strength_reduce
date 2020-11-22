@@ -235,12 +235,12 @@ const fn is_slice_greater(a: &[u64], a_len: usize, b: &[u64], ibbeg: usize) -> b
 // subtract b from a, and store the result in a
 macro_rules! sub_assign {
 	// $a[$ibeg..$iend] ,  $b: [u64]
-	($a:expr, $ibeg:expr, $iend:expr, $b:expr) => {
+	($a:expr, $ibeg:expr, $iend:expr, $b:expr, $b_len:expr) => {{
 		let mut borrow: i128 = 0;
 		let mut i = 0;
 
 		// subtract b from a, keeping track of borrows as we go
-		while i < $b.len() {
+		while i < $b_len {
 			borrow += $a[$ibeg + i] as i128;
 			borrow -= $b[i] as i128;
 			$a[$ibeg + i] = borrow as u64;
@@ -249,16 +249,14 @@ macro_rules! sub_assign {
 		}
 	
 		// We're done subtracting, we just need to finish carrying
-		let mut i = 0;
-		let a_len = $iend - $ibeg;
-		while borrow != 0 && i < a_len {
-			borrow += $a[$ibeg + i] as i128;
-	
-			$a[$ibeg + i] = borrow as u64;
+		i += $ibeg;
+		while borrow != 0 && i < $iend {
+			borrow += $a[i] as i128;
+			$a[i] = borrow as u64;
 			borrow >>= 64;
 			i += 1;
 		}
-	};
+	}};
 }
 
 
@@ -390,7 +388,7 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 			// greater than this iteration's numerator slice. ifthat's the case, decrement it until it's less than
 			// or equal.
 			while is_slice_greater(&tmp_product, sub_product_len, &numerator_chunks, quotient_idx) {
-				sub_assign!(tmp_product, 0, sub_product_len, divisor_chunks);
+				sub_assign!(tmp_product, 0, sub_product_len, divisor_chunks, divisor_slice_len);
 				sub_quotient -= 1;
 			}
 
@@ -398,10 +396,8 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 			// subtract the product from the full numerator, so that what remains in the numerator is the remainder
 			// of this division
 			quotient_chunks[quotient_idx] = sub_quotient;
-			sub_assign!(numerator_chunks, quotient_idx, numerator_max_idx, tmp_product);
+			sub_assign!(numerator_chunks, quotient_idx, numerator_slice_len, tmp_product, sub_product_len);
 		}
-
-
 		// slice off any zeroes at the end of the numerator. we're not calling normalize_slice here because of
 		// borrow checker obnoxiousness
 		numerator_max_idx -= trailing_zeros(&numerator_chunks, numerator_slice_len);
@@ -423,6 +419,11 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 mod unit_tests {
 	use super::*;
 	use num_bigint::BigUint;
+
+	#[test]
+	fn test_0x1_0000_0000_0000_0003() {
+		test_divisor_128(0x1_0000_0000_0000_0003);
+	}
 
 	#[test]
 	fn test_divide_128_by_64() {
@@ -465,7 +466,7 @@ mod unit_tests {
 		//);
 		assert_eq!(
 			big_quotient, actual64_big, 
-			"Actual64 quotient didn't match expected quotient for max/{}", divisor
+			"Actual64 quotient didn't match expected quotient for max/{:#X}", divisor
 		);
 	}
 
