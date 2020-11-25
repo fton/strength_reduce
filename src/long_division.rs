@@ -448,6 +448,11 @@ mod unit_tests {
 	use num_bigint::BigUint;
 
 	#[test]
+	fn test_0x1_0000_0000_0000_0003() {
+		test_divisor_128(0x1_0000_0000_0000_0003);
+	}
+
+	#[test]
 	fn test_divide_128_by_64() {
 		for divisor in core::u64::MAX..=core::u64::MAX {
 			let divisor_128 = core::u64::MAX as u128;

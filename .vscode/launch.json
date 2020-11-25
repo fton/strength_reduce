@@ -1,0 +1,66 @@
+{
+    // IntelliSense を使用して利用可能な属性を学べます。
+    // 既存の属性の説明をホバーして表示します。
+    // 詳細情報は次を確認してください: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in library 'strength_reduce'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "test_0x1_0000_0000_0000_0003",
+                    "--no-run",
+                    "--lib",
+                    "--package=strength_reduce"
+                ],
+                "filter": {
+                    "name": "strength_reduce",
+                    "kind": "lib"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug integration test 'test_reduced_unsigned'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--test=test_reduced_unsigned",
+                    "--package=strength_reduce"
+                ],
+                "filter": {
+                    "name": "test_reduced_unsigned",
+                    "kind": "test"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug benchmark 'strength_reduce_benchmarks'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bench=strength_reduce_benchmarks",
+                    "--package=strength_reduce"
+                ],
+                "filter": {
+                    "name": "strength_reduce_benchmarks",
+                    "kind": "bench"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        }
+    ]
+}
