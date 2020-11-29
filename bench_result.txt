@@ -1,0 +1,77 @@
+
+running 11 tests
+test long_division::unit_tests::test_0x1_0000_0000_0000_0003 ... ignored
+test long_division::unit_tests::test_divide_128_by_64 ... ignored
+test long_division::unit_tests::test_max_256 ... ignored
+test long_division::unit_tests::test_trailing_zeros ... ignored
+test unit_tests::for_debug ... ignored
+test unit_tests::test_strength_reduced_u128 ... ignored
+test unit_tests::test_strength_reduced_u16 ... ignored
+test unit_tests::test_strength_reduced_u32 ... ignored
+test unit_tests::test_strength_reduced_u64 ... ignored
+test unit_tests::test_strength_reduced_u8 ... ignored
+test unit_tests::test_strength_reduced_usize ... ignored
+
+test result: ok. 0 passed; 0 failed; 11 ignored; 0 measured; 0 filtered out
+
+
+running 56 tests
+test bench_u08::division_standard                 ... bench:       2,894 ns/iter (+/- 61)
+test bench_u08::modulo_standard                   ... bench:       2,648 ns/iter (+/- 22)
+test bench_u08::repeated_division_reduced         ... bench:       2,062 ns/iter (+/- 152)
+test bench_u08::repeated_division_reduced_power2  ... bench:       1,964 ns/iter (+/- 32)
+test bench_u08::repeated_divrem_reduced           ... bench:       3,419 ns/iter (+/- 96)
+test bench_u08::repeated_divrem_reduced_power2    ... bench:       3,363 ns/iter (+/- 41)
+test bench_u08::repeated_modulo_reduced           ... bench:       1,953 ns/iter (+/- 23)
+test bench_u08::repeated_modulo_reduced_power2    ... bench:       1,968 ns/iter (+/- 133)
+test bench_u08::single_division_reduced           ... bench:       6,124 ns/iter (+/- 89)
+test bench_u08::single_division_reduced_power2    ... bench:       2,339 ns/iter (+/- 35)
+test bench_u128::division_standard                ... bench:      29,485 ns/iter (+/- 273)
+test bench_u128::modulo_standard                  ... bench:      29,202 ns/iter (+/- 658)
+test bench_u128::repeated_division_reduced        ... bench:       7,340 ns/iter (+/- 108)
+test bench_u128::repeated_division_reduced_power2 ... bench:       5,015 ns/iter (+/- 56)
+test bench_u128::repeated_divrem_reduced          ... bench:       8,648 ns/iter (+/- 120)
+test bench_u128::repeated_divrem_reduced_power2   ... bench:       6,456 ns/iter (+/- 61)
+test bench_u128::repeated_modulo_reduced          ... bench:       8,231 ns/iter (+/- 113)
+test bench_u128::repeated_modulo_reduced_power2   ... bench:       3,407 ns/iter (+/- 31)
+test bench_u128::single_division_reduced          ... bench:      82,469 ns/iter (+/- 1,646)
+test bench_u128::single_division_reduced_power2   ... bench:       6,820 ns/iter (+/- 260)
+test bench_u128::targeted_single_division_032bit  ... bench:      71,358 ns/iter (+/- 1,188)
+test bench_u128::targeted_single_division_064bit  ... bench:     145,880 ns/iter (+/- 1,798)
+test bench_u128::targeted_single_division_096bit  ... bench:     142,280 ns/iter (+/- 1,783)
+test bench_u128::targeted_single_division_128bit  ... bench:     138,688 ns/iter (+/- 1,967)
+test bench_u16::division_standard                 ... bench:       2,790 ns/iter (+/- 48)
+test bench_u16::modulo_standard                   ... bench:       2,786 ns/iter (+/- 40)
+test bench_u16::repeated_division_reduced         ... bench:       1,849 ns/iter (+/- 40)
+test bench_u16::repeated_division_reduced_power2  ... bench:       1,957 ns/iter (+/- 24)
+test bench_u16::repeated_divrem_reduced           ... bench:       2,296 ns/iter (+/- 40)
+test bench_u16::repeated_divrem_reduced_power2    ... bench:       2,788 ns/iter (+/- 23)
+test bench_u16::repeated_modulo_reduced           ... bench:       2,092 ns/iter (+/- 21)
+test bench_u16::repeated_modulo_reduced_power2    ... bench:       5,284 ns/iter (+/- 59)
+test bench_u16::single_division_reduced           ... bench:       5,568 ns/iter (+/- 92)
+test bench_u16::single_division_reduced_power2    ... bench:       2,240 ns/iter (+/- 36)
+test bench_u32::division_standard                 ... bench:       2,784 ns/iter (+/- 37)
+test bench_u32::modulo_standard                   ... bench:       2,784 ns/iter (+/- 25)
+test bench_u32::repeated_division_reduced         ... bench:       1,953 ns/iter (+/- 17)
+test bench_u32::repeated_division_reduced_power2  ... bench:       2,233 ns/iter (+/- 18)
+test bench_u32::repeated_divrem_reduced           ... bench:       1,019 ns/iter (+/- 16)
+test bench_u32::repeated_divrem_reduced_power2    ... bench:         148 ns/iter (+/- 3)
+test bench_u32::repeated_modulo_reduced           ... bench:       1,952 ns/iter (+/- 22)
+test bench_u32::repeated_modulo_reduced_power2    ... bench:       1,961 ns/iter (+/- 38)
+test bench_u32::single_division_reduced           ... bench:      10,995 ns/iter (+/- 136)
+test bench_u32::single_division_reduced_power2    ... bench:       2,579 ns/iter (+/- 110)
+test bench_u64::division_standard                 ... bench:       6,744 ns/iter (+/- 105)
+test bench_u64::modulo_standard                   ... bench:       6,736 ns/iter (+/- 127)
+test bench_u64::repeated_division_reduced         ... bench:       2,089 ns/iter (+/- 25)
+test bench_u64::repeated_division_reduced_power2  ... bench:       2,370 ns/iter (+/- 80)
+test bench_u64::repeated_divrem_reduced           ... bench:       1,551 ns/iter (+/- 16)
+test bench_u64::repeated_divrem_reduced_power2    ... bench:         289 ns/iter (+/- 4)
+test bench_u64::repeated_modulo_reduced           ... bench:       2,360 ns/iter (+/- 35)
+test bench_u64::repeated_modulo_reduced_power2    ... bench:       1,954 ns/iter (+/- 15)
+test bench_u64::single_division_reduced           ... bench:      23,443 ns/iter (+/- 378)
+test bench_u64::single_division_reduced_power2    ... bench:       2,788 ns/iter (+/- 45)
+test bench_u64::targeted_single_division_32bit    ... bench:      28,921 ns/iter (+/- 503)
+test bench_u64::targeted_single_division_64bit    ... bench:      35,414 ns/iter (+/- 346)
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 56 measured; 0 filtered out
+

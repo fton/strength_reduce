@@ -3,10 +3,13 @@ extern crate core;
 const U32_MAX: u64 = core::u32::MAX as u64;
 //const U64_MAX: u128 = core::u64::MAX as u128;
 
-use core::num::NonZeroU64;
-use ::StrengthReducedU64;
-use ::long_multiplication;
+use core:: {
+	num::NonZeroU64,
+	ops::Range,
+};
+use :: { StrengthReducedU64, long_multiplication, len };
 
+#[inline]
 const fn min_u64(a: u64, b: u64) -> u64 {
 	if a < b { a } else { b }
 }
@@ -150,7 +153,7 @@ pub fn divide_128(numerator: u128, divisor: u128) -> u128 {
 
 
 
-#[inline(never)]
+//#[inline(never)]
 const fn long_division(
 	numerator_slice: [u64; 4], 
 	reduced_divisor: &StrengthReducedU64, 
@@ -185,47 +188,39 @@ const fn long_division(
 	quotient
 }
 
-#[doc(hidden)]
-/// ```
-/// let a = [0, 1, 2];
-/// assert_eq!(trailing_zeros(&a), 0);
-/// let b = [0, 1, 0];
-/// assert_eq!(trailing_zeros(&b), 1);
-/// let c = [0, 0];
-/// assert_eq!(trailing_zeros(&c), 2);
-/// ```
-const fn trailing_zeros(input: &[u64], input_len: usize) -> usize {
-	let mut i = input_len;
+#[inline]
+const fn trailing_zeros(input: &[u64], r: Range<usize>) -> usize {
+	let mut i = r.end;
 
-	while i > 0 {
+	while i > r.start {
 		i -= 1;
 		if input[i] != 0 {
 			i += 1;
 			break;
 		}
 	}
-	input_len - i
+	r.end - i
 }
 
 #[inline]
-const fn is_slice_greater(a: &[u64], a_len: usize, b: &[u64], ibbeg: usize) -> bool {
-	let b_len = b.len() - ibbeg;
-
-    if a_len > b_len {
+const fn is_slice_greater(a: &[u64], ra: Range<usize>, b: &[u64], rb: Range<usize>) -> bool {
+    if len(&ra) > len(&rb) {
         return true;
     }
-    if b_len > a_len {
+    if len(&rb) > len(&ra) {
     	return false;
     }
 	// a_len == b_len
-	let mut i = a_len;
+	let mut i = ra.end;
+	let mut j = rb.end;
 
-	while i > 0 {
+	while i > ra.start {
 		i -= 1;
-        if a[i] < b[i + ibbeg] {
+		j -= 1;
+        if a[i] < b[j] {
             return false;
         }
-        if a[i] > b[i + ibbeg] {
+        if a[i] > b[j] {
             return true;
         }
     }
@@ -235,22 +230,23 @@ const fn is_slice_greater(a: &[u64], a_len: usize, b: &[u64], ibbeg: usize) -> b
 // subtract b from a, and store the result in a
 macro_rules! sub_assign {
 	// $a[$ibeg..$iend] ,  $b: [u64]
-	($a:expr, $ibeg:expr, $iend:expr, $b:expr, $b_len:expr) => {{
+	($a:expr, $ra:expr, $b:expr, $rb:expr) => {{
 		let mut borrow: i128 = 0;
-		let mut i = 0;
-
+		let mut i = $ra.start;
+		let mut j = $rb.start;
+		
 		// subtract b from a, keeping track of borrows as we go
-		while i < $b_len {
-			borrow += $a[$ibeg + i] as i128;
-			borrow -= $b[i] as i128;
-			$a[$ibeg + i] = borrow as u64;
+		while j < $rb.end {
+			borrow += $a[i] as i128;
+			borrow -= $b[j] as i128;
+			$a[i] = borrow as u64;
 			borrow >>= 64;
 			i += 1;
+			j += 1;
 		}
 	
 		// We're done subtracting, we just need to finish carrying
-		i += $ibeg;
-		while borrow != 0 && i < $iend {
+		while borrow != 0 && i < $ra.end {
 			borrow += $a[i] as i128;
 			$a[i] = borrow as u64;
 			borrow >>= 64;
@@ -375,11 +371,11 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 
 			let mut tmp_product = long_multiplication::long_multiply(
 				&divisor_chunks, 
-				divisor_slice_len, 
+				0..divisor_slice_len, 
 				sub_quotient, 
 				[0; 3]
 			);
-			let sub_product_len = tmp_product.len() - trailing_zeros(&tmp_product, tmp_product.len());
+			let sub_product_len = tmp_product.len() - trailing_zeros(&tmp_product, 0..tmp_product.len());
 
 			// our sub_quotient is just a guess at the quotient -- it only accounts for the topmost bits of the
 			// divisor. when we take the bottom bits of the divisor into account, the actual quotient will be
@@ -387,8 +383,11 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 			// we will know if our guess is too large if (quotient_guess * full_divisor) (aka sub_product) is
 			// greater than this iteration's numerator slice. ifthat's the case, decrement it until it's less than
 			// or equal.
-			while is_slice_greater(&tmp_product, sub_product_len, &numerator_chunks, quotient_idx) {
-				sub_assign!(tmp_product, 0, sub_product_len, divisor_chunks, divisor_slice_len);
+			while is_slice_greater(
+					&tmp_product, 0..sub_product_len, 
+					&numerator_chunks, quotient_idx..numerator_max_idx) 
+			{
+				sub_assign!(tmp_product, 0..sub_product_len, divisor_chunks, 0..divisor_slice_len);
 				sub_quotient -= 1;
 			}
 
@@ -396,11 +395,11 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 			// subtract the product from the full numerator, so that what remains in the numerator is the remainder
 			// of this division
 			quotient_chunks[quotient_idx] = sub_quotient;
-			sub_assign!(numerator_chunks, quotient_idx, numerator_slice_len, tmp_product, sub_product_len);
+			sub_assign!(numerator_chunks, quotient_idx..numerator_slice_len, tmp_product, 0..sub_product_len);
 		}
 		// slice off any zeroes at the end of the numerator. we're not calling normalize_slice here because of
 		// borrow checker obnoxiousness
-		numerator_max_idx -= trailing_zeros(&numerator_chunks, numerator_slice_len);
+		numerator_max_idx -= trailing_zeros(&numerator_chunks, 0..numerator_slice_len);
 	}
 
 	
@@ -613,5 +612,15 @@ mod unit_tests {
 
 		// We now have our separate quotients, now we just have to add them together
 		(quotient_hi << 32) | quotient_lo
+	}
+
+	#[test]
+	fn test_trailing_zeros() {
+		let a = [0, 1, 2];
+		assert_eq!(trailing_zeros(&a, 0..a.len()), 0);
+		let b = [0, 1, 0];
+		assert_eq!(trailing_zeros(&b, 0..b.len()), 1);
+		let c = [0, 0];
+		assert_eq!(trailing_zeros(&c, 0..c.len()), 2);
 	}
 }

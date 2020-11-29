@@ -18,11 +18,11 @@ macro_rules! reduction_proptest {
                 let expected_rem = numerator % divisor;
                 let reduced_div = numerator / reduced_divisor;
                 let reduced_rem = numerator % reduced_divisor;
-                assert_eq!(expected_div, reduced_div, "Divide failed with numerator: {}, divisor: {}", numerator, divisor);
-                assert_eq!(expected_rem, reduced_rem, "Modulo failed with numerator: {}, divisor: {}", numerator, divisor);
+                assert_eq!(expected_div, reduced_div, "Divide failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
+                assert_eq!(expected_rem, reduced_rem, "Modulo failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
                 let (reduced_combined_div, reduced_combined_rem) = $struct_name::div_rem(numerator, reduced_divisor);
-                assert_eq!(expected_div, reduced_combined_div, "div_rem divide failed with numerator: {}, divisor: {}", numerator, divisor);
-                assert_eq!(expected_rem, reduced_combined_rem, "div_rem modulo failed with numerator: {}, divisor: {}", numerator, divisor);
+                assert_eq!(expected_div, reduced_combined_div, "div_rem divide failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
+                assert_eq!(expected_rem, reduced_combined_rem, "div_rem modulo failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
             }
 
 

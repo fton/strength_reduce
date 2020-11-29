@@ -10,9 +10,13 @@ use rand::{rngs::StdRng, SeedableRng, distributions::Distribution, distributions
 const REPETITIONS: usize = 1000;
 
 macro_rules! bench_unsigned {
-	($struct_name:ident, $primitive_type:ident) => (
+	($struct_name:ident, $primitive_type:ident, $non_zero_type:ident) => (
 		#[inline(never)]
-		fn compute_repeated_division_primitive(numerators: &[$primitive_type], divisor: $primitive_type) -> $primitive_type {
+		fn compute_repeated_division_primitive(
+			numerators: &[$primitive_type], 
+			divisor: $primitive_type) 
+			-> $primitive_type 
+		{
 			let mut sum = 0;
 			for numerator in numerators {
 				sum += *numerator / divisor;
@@ -21,7 +25,11 @@ macro_rules! bench_unsigned {
 		}
 
 		#[inline(never)]
-		fn compute_repeated_division(numerators: &[$primitive_type], divisor: strength_reduce::$struct_name) -> $primitive_type {
+		fn compute_repeated_division(
+			numerators: &[$primitive_type], 
+			divisor: strength_reduce::$struct_name) 
+			-> $primitive_type 
+		{
 			let mut sum = 0;
 			for numerator in numerators {
 				sum += *numerator / divisor;
@@ -33,14 +41,18 @@ macro_rules! bench_unsigned {
 		fn compute_single_division(divisors: &[$primitive_type]) -> $primitive_type {
 			let mut sum = 0;
 			for divisor in divisors {
-				let reduced_divisor = strength_reduce::$struct_name::new(*divisor);
+				let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(*divisor).unwrap());
 				sum += 100 / reduced_divisor;
 			}
 			sum
 		}
 
 		#[inline(never)]
-		fn compute_repeated_modulo_primitive(numerators: &[$primitive_type], divisor: $primitive_type) -> $primitive_type {
+		fn compute_repeated_modulo_primitive(
+			numerators: &[$primitive_type], 
+			divisor: $primitive_type) 
+			-> $primitive_type 
+		{
 			let mut sum = 0;
 			for numerator in numerators {
 				sum += *numerator % divisor;
@@ -49,7 +61,11 @@ macro_rules! bench_unsigned {
 		}
 
 		#[inline(never)]
-		fn compute_repeated_modulo(numerators: &[$primitive_type], divisor: strength_reduce::$struct_name) -> $primitive_type {
+		fn compute_repeated_modulo(
+			numerators: &[$primitive_type], 
+			divisor: strength_reduce::$struct_name) 
+			-> $primitive_type 
+		{
 			let mut sum = 0;
 			for numerator in numerators {
 				sum += *numerator % divisor;
@@ -58,7 +74,11 @@ macro_rules! bench_unsigned {
 		}
 
 		#[inline(never)]
-		fn compute_repeated_divrem(numerators: &[$primitive_type], divisor: strength_reduce::$struct_name) -> ($primitive_type, $primitive_type) {
+		fn compute_repeated_divrem(
+			numerators: &[$primitive_type], 
+			divisor: strength_reduce::$struct_name) 
+			-> ($primitive_type, $primitive_type) 
+		{
 			let mut div_sum = 0;
 			let mut rem_sum = 0;
 			for numerator in numerators {
@@ -70,7 +90,9 @@ macro_rules! bench_unsigned {
 		}
 
 		fn gen_numerators() -> Vec<$primitive_type> {
-			test::black_box((0..std::$primitive_type::MAX).rev().cycle().take(REPETITIONS).collect::<Vec<$primitive_type>>())
+			test::black_box(
+				(0..std::$primitive_type::MAX).rev().cycle().take(REPETITIONS).collect::<Vec<$primitive_type>>()
+			)
 		}
 
 		#[bench]
@@ -82,14 +104,14 @@ macro_rules! bench_unsigned {
 
 		#[bench]
 		fn repeated_division_reduced_power2(b: &mut test::Bencher) {
-			let reduced_divisor = strength_reduce::$struct_name::new(8);
+			let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(8).unwrap());
 			let numerators = gen_numerators();
 			b.iter(|| { test::black_box(compute_repeated_division(&numerators, reduced_divisor)); });
 		}
 
 		#[bench]
 		fn repeated_division_reduced(b: &mut test::Bencher) {
-			let reduced_divisor = strength_reduce::$struct_name::new(6);
+			let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(6).unwrap());
 			let numerators = gen_numerators();
 			b.iter(|| { test::black_box(compute_repeated_division(&numerators, reduced_divisor)); });
 		}
@@ -103,28 +125,28 @@ macro_rules! bench_unsigned {
 
 		#[bench]
 		fn repeated_modulo_reduced_power2(b: &mut test::Bencher) {
-			let reduced_divisor = strength_reduce::$struct_name::new(8);
+			let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(8).unwrap());
 			let numerators = gen_numerators();
 			b.iter(|| { test::black_box(compute_repeated_modulo(&numerators, reduced_divisor)); });
 		}
 
 		#[bench]
 		fn repeated_modulo_reduced(b: &mut test::Bencher) {
-			let reduced_divisor = strength_reduce::$struct_name::new(6);
+			let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(6).unwrap());
 			let numerators = gen_numerators();
 			b.iter(|| { test::black_box(compute_repeated_modulo(&numerators, reduced_divisor)); });
 		}
 
 		#[bench]
 		fn repeated_divrem_reduced_power2(b: &mut test::Bencher) {
-			let reduced_divisor = strength_reduce::$struct_name::new(8);
+			let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(8).unwrap());
 			let numerators = gen_numerators();
 			b.iter(|| { test::black_box(compute_repeated_divrem(&numerators, reduced_divisor)); });
 		}
 
 		#[bench]
 		fn repeated_divrem_reduced(b: &mut test::Bencher) {
-			let reduced_divisor = strength_reduce::$struct_name::new(6);
+			let reduced_divisor = strength_reduce::$struct_name::new($non_zero_type::new(6).unwrap());
 			let numerators = gen_numerators();
 			b.iter(|| { test::black_box(compute_repeated_divrem(&numerators, reduced_divisor)); });
 		}
@@ -145,19 +167,27 @@ macro_rules! bench_unsigned {
 
 mod bench_u08 {
 	use super::*;
-	bench_unsigned!(StrengthReducedU8, u8);
+	use std::num::NonZeroU8;
+
+	bench_unsigned!(StrengthReducedU8, u8, NonZeroU8);
 }
 mod bench_u16 {
 	use super::*;
-	bench_unsigned!(StrengthReducedU16, u16);
+	use std::num::NonZeroU16;
+
+	bench_unsigned!(StrengthReducedU16, u16, NonZeroU16);
 }
 mod bench_u32 {
 	use super::*;
-	bench_unsigned!(StrengthReducedU32, u32);
+	use std::num::NonZeroU32;
+
+	bench_unsigned!(StrengthReducedU32, u32, NonZeroU32);
 }
 mod bench_u64 {
 	use super::*;
-	bench_unsigned!(StrengthReducedU64, u64);
+	use std::num::NonZeroU64;
+
+	bench_unsigned!(StrengthReducedU64, u64, NonZeroU64);
 
 	// generates random divisors with values in the range [1<<bit_min, 1<<bit_max)
 	fn generate_random_divisors(bit_min: u32, bit_max: u32, count: usize) -> Vec<u64> {
@@ -173,7 +203,8 @@ mod bench_u64 {
 		(0..count).map(|_| dist.sample(&mut gen)).collect()
 	}
 
-	// since the constructor for StrengthReducedU64 is so dependent on input size, we're going to do a few more targeted "single division" tests at specific sizes, so we can measure each "size class" separately
+	// since the constructor for StrengthReducedU64 is so dependent on input size, we're going to do a few more
+	// targeted "single division" tests at specific sizes, so we can measure each "size class" separately
 	#[bench]
 	fn targeted_single_division_32bit(b: &mut test::Bencher) {
 		let divisors = test::black_box(generate_random_divisors(0, 32, REPETITIONS));
@@ -187,7 +218,9 @@ mod bench_u64 {
 }
 mod bench_u128 {
 	use super::*;
-	bench_unsigned!(StrengthReducedU128, u128);
+	use std::num::NonZeroU128;
+
+	bench_unsigned!(StrengthReducedU128, u128, NonZeroU128);
 
 	// generates random divisors with values in the range [1<<bit_min, 1<<bit_max)
 	fn generate_random_divisors(bit_min: u32, bit_max: u32, count: usize) -> Vec<u128> {
@@ -203,7 +236,8 @@ mod bench_u128 {
 		(0..count).map(|_| dist.sample(&mut gen)).collect()
 	}
 
-	// since the constructor for StrengthReducedU128 is so dependent on input size, we're going to do a few more targeted "single division" tests at specific sizes, so we can measure each "size class" separately
+	// since the constructor for StrengthReducedU128 is so dependent on input size, we're going to do a few more
+	// targeted "single division" tests at specific sizes, so we can measure each "size class" separately
 	#[bench]
 	fn targeted_single_division_032bit(b: &mut test::Bencher) {
 		let divisors = test::black_box(generate_random_divisors(0, 32, REPETITIONS));

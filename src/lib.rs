@@ -9,7 +9,9 @@
 //!
 //! # Example:
 //! ```
+//! # extern crate core;
 //! use strength_reduce::StrengthReducedU64;
+//! use core::num::NonZeroU64;
 //! 
 //! let mut my_array: Vec<u64> = (0..500).collect();
 //! let divisor = 3;
@@ -21,8 +23,8 @@
 //! }
 //!
 //! // fast strength-reduced division and modulo
-//! let reduced_divisor = StrengthReducedU64::new(divisor);
-//! let reduced_modulo = StrengthReducedU64::new(modulo);
+//! let reduced_divisor = StrengthReducedU64::new(NonZeroU64::new(divisor).unwrap());
+//! let reduced_modulo = StrengthReducedU64::new(NonZeroU64::new(modulo).unwrap());
 //! for element in &mut my_array {
 //!     *element = (*element / reduced_divisor) % reduced_modulo;
 //! }
@@ -48,7 +50,7 @@ extern crate rand;
 
 use core:: {
     num:: { NonZeroU8, NonZeroU16, NonZeroU32, NonZeroU64, NonZeroU128, NonZeroUsize },
-    ops:: { Div, Rem },
+    ops:: { Div, Rem, Range },
 };
 
 mod long_division;
@@ -100,6 +102,7 @@ impl StrengthReducedU8 {
         self.divisor.get()
     }
 
+    #[inline]
     pub const fn divide(&self, num: u8) -> u8 {
         if self.multiplier == 0 {
             (num as u16 >> self.get().trailing_zeros()) as u8
@@ -112,6 +115,7 @@ impl StrengthReducedU8 {
         }
     }
 
+    #[inline]
     pub const fn remainder(&self, num: u8) -> u8 {
         if self.multiplier == 0 {
             num & (self.get() - 1)
@@ -198,6 +202,7 @@ macro_rules! strength_reduced_u16 {
                 self.divisor.get()
             }
 
+            #[inline]
             pub const fn divide(&self, num: $primitive_type) -> $primitive_type {
                 if self.multiplier == 0 {
                     num >> self.get().trailing_zeros()
@@ -210,6 +215,7 @@ macro_rules! strength_reduced_u16 {
                 }
             }
 
+            #[inline]
             pub const fn remainder(&self, num: $primitive_type) -> $primitive_type {
                 if self.multiplier == 0 {
                     num & (self.get() - 1)
@@ -303,6 +309,7 @@ macro_rules! strength_reduced_u32 {
                 self.divisor.get()
             }
 
+            #[inline]
             pub const fn divide(&self, num: $primitive_type) -> $primitive_type {
                 if self.multiplier == 0 {
                     num >> self.get().trailing_zeros()
@@ -315,6 +322,7 @@ macro_rules! strength_reduced_u32 {
                 }
             }
             
+            #[inline]
             pub const fn remainder(&self, num: $primitive_type) -> $primitive_type {
                 if self.multiplier == 0 {
                     num & (self.get() - 1)
@@ -410,6 +418,7 @@ macro_rules! strength_reduced_u64 {
                 self.divisor.get()
             }
 
+            #[inline]
             pub const fn divide(&self, num: $primitive_type) -> $primitive_type {
                 if self.multiplier == 0 {
                     num >> self.get().trailing_zeros()
@@ -422,6 +431,7 @@ macro_rules! strength_reduced_u64 {
                 }
             }
 
+            #[inline]
             pub const fn remainder(&self, num: $primitive_type) -> $primitive_type {
                 if self.multiplier == 0 {
                     num & (self.get() - 1)
@@ -499,6 +509,7 @@ impl StrengthReducedU128 {
         self.divisor.get()
     }
 
+    #[inline]
     pub const fn divide(&self, num: u128) -> u128 {
         if self.multiplier_hi == 0 {
             num >> self.get().trailing_zeros()
@@ -507,6 +518,7 @@ impl StrengthReducedU128 {
         }
     }
 
+    #[inline]
     pub const fn remainder(&self, num: u128) -> u128 {
         if self.multiplier_hi == 0 {
             num & (self.get() - 1)
@@ -549,6 +561,11 @@ strength_reduced_u16!(StrengthReducedUsize, usize, NonZeroUsize);
 strength_reduced_u32!(StrengthReducedUsize, usize, NonZeroUsize);
 #[cfg(target_pointer_width = "64")]
 strength_reduced_u64!(StrengthReducedUsize, usize, NonZeroUsize);
+
+
+pub(crate) const fn len(r: &Range<usize>) -> usize {
+	r.end - r.start
+}
 
 #[cfg(test)]
 mod unit_tests {
@@ -604,4 +621,28 @@ mod unit_tests {
     reduction_test!(test_strength_reduced_u64, StrengthReducedU64, u64, NonZeroU64);
     reduction_test!(test_strength_reduced_usize, StrengthReducedUsize, usize, NonZeroUsize);
     reduction_test!(test_strength_reduced_u128, StrengthReducedU128, u128, NonZeroU128);
+
+    #[test]
+    fn for_debug() {
+        let numerator = 0xFFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFF_FFFE;
+        let divisor = 0xC187_F639_BEF7_D9FE_6EB9_F118_6E65_06E1;
+        let expected_div = numerator / divisor;
+        let expected_rem = numerator % divisor;
+        let reduced_divisor = StrengthReducedU128::new(NonZeroU128::new(divisor).unwrap());
+        let reduced_div = numerator / reduced_divisor;
+
+        assert_eq!(expected_div, reduced_div, 
+            "Divide failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
+
+        let reduced_rem = numerator % reduced_divisor;
+        assert_eq!(expected_rem, reduced_rem, 
+            "Modulo failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
+
+        let (reduced_combined_div, reduced_combined_rem) = 
+            StrengthReducedU128::div_rem(numerator, reduced_divisor);
+        assert_eq!(expected_div, reduced_combined_div, 
+            "div_rem divide failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
+        assert_eq!(expected_rem, reduced_combined_rem, 
+            "div_rem modulo failed with numerator: {:#X}, divisor: {:#X}", numerator, divisor);
+    }
 }
