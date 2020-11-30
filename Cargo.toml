@@ -13,6 +13,8 @@ keywords = ["arithmetic", "strength", "reduction", "division", "modulus"]
 categories = ["algorithms", "data-structures"]
 readme = "README.md"
 
+edition = '2018'
+
 [dev-dependencies]
 proptest = "0.10.0"
 num-bigint = "0.3"

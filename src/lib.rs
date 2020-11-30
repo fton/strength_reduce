@@ -270,7 +270,7 @@ macro_rules! strength_reduced_u32 {
             /// When using in const context, you can use NonZeroUxxxx::new_unchecked() because zero 
             /// `divisor` always stop the compiler by zero divide.
             #[inline]
-            pub fn new(divisor: $non_zero_type) -> Self {
+            pub const fn new(divisor: $non_zero_type) -> Self {
                 Self {
                     divisor,
                     multiplier: if divisor.get().is_power_of_two() { // divisor is not zero.

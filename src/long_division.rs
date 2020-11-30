@@ -1,19 +1,15 @@
-extern crate core;
-
-const U32_MAX: u64 = core::u32::MAX as u64;
-//const U64_MAX: u128 = core::u64::MAX as u128;
-
 use core:: {
 	num::NonZeroU64,
 	ops::Range,
 };
-use :: { StrengthReducedU64, long_multiplication, len };
+use crate:: { StrengthReducedU64, long_multiplication, len };
+
+const U32_MAX: u64 = core::u32::MAX as u64;
 
 #[inline]
 const fn min_u64(a: u64, b: u64) -> u64 {
 	if a < b { a } else { b }
 }
-
 
 // divides a 128-bit number by a 64-bit divisor, returning the quotient as a 64-bit number
 // assumes that the divisor and numerator have both already been bit-shifted so that 

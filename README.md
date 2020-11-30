@@ -6,12 +6,18 @@
 
 `strength_reduce` implements integer division and modulo via "arithmetic strength reduction".
 
-Modern processors can do multiplication and shifts much faster than division, and "arithmetic strength reduction" is an algorithm to transform divisions into multiplications and shifts.
-ompilers already perform this optimization for divisors that are known at compile time; this library enables this optimization for divisors that are only known at runtime.
+Modern processors can do multiplication and shifts much faster than division, and "arithmetic strength reduction" 
+is an algorithm to transform divisions into multiplications and shifts.
+ompilers already perform this optimization for divisors that are known at compile time; this library enables this 
+optimization for divisors that are only known at runtime.
 
 Benchmarking shows a 5-10x speedup or integer division and modulo operations.
 
-This library is intended for hot loops like the example below, where a division is repeated many times in a loop with the divisor remaining unchanged. There is a setup cost associated with creating stength-reduced division instances, so using strength-reduced division for 1-2 divisions is not worth the setup cost. The break-even point differs by use-case, but is typically low: Benchmarking has shown that takes 3 to 4 repeated divisions with the same StengthReduced## instance to be worth it.
+This library is intended for hot loops like the example below, where a division is repeated many times in a loop 
+with the divisor remaining unchanged. There is a setup cost associated with creating stength-reduced division 
+instances, so using strength-reduced division for 1-2 divisions is not worth the setup cost. The break-even point 
+differs by use-case, but is typically low: Benchmarking has shown that takes 3 to 4 repeated divisions with the 
+same StengthReduced## instance to be worth it.
 
 `strength_reduce` is `#![no_std]`
 
@@ -20,6 +26,7 @@ See the [API Documentation](https://docs.rs/strength_reduce/) for more details.
 ## Example
 ```rust
 use strength_reduce::StrengthReducedU64;
+use core::num::NonZeroU64;
 
 let mut my_array: Vec<u64> = (0..500).collect();
 let divisor = 3;
@@ -31,8 +38,8 @@ for element in &mut my_array {
 }
 
 // fast strength-reduced division and modulo
-let reduced_divisor = StrengthReducedU64::new(divisor);
-let reduced_modulo = StrengthReducedU64::new(modulo);
+let reduced_divisor = StrengthReducedU64::new(NonZeroU64::new(divisor).unwrap());
+let reduced_modulo = StrengthReducedU64::new(NonZeroU64::new(modulo).unwrap());
 for element in &mut my_array {
     *element = (*element / reduced_divisor) % reduced_modulo;
 }
@@ -40,8 +47,10 @@ for element in &mut my_array {
 
 ## Testing
 
-`strength_reduce` uses `proptest` to generate test cases. In addition, the `u8` and `u16` problem spaces are small enough that we can exhaustively test every possible combination of numerator and divisor.
-However, the `u16` exhaustive test takes several minutes to run, so it is marked `#[ignore]`. Before submitting pull requests, please test with `cargo test -- --ignored` at least once.
+`strength_reduce` uses `proptest` to generate test cases. In addition, the `u8` and `u16` problem spaces are small 
+enough that we can exhaustively test every possible combination of numerator and divisor.
+However, the `u16` exhaustive test takes several minutes to run, so it is marked `#[ignore]`. Before submitting 
+pull requests, please test with `cargo test -- --ignored` at least once.
 
 ## Compatibility
 
