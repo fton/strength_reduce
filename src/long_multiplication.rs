@@ -1,5 +1,4 @@
 use core::ops::Range;
-//use ::len;
 
 // multiply the 256-bit number 'a' by the 128-bit number 'b' and return the uppermost 128 bits of the product
 // ripped directly from num-biguint's long multiplication algorithm (mac3, mac_with_carry, adc), but with fixed-

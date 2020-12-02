@@ -408,17 +408,10 @@ pub(crate) const fn divide_256_max_by_128(divisor: u128) -> (u128, u128) {
 	(quotient_hi, quotient_lo)
 }
 
-
-
 #[cfg(test)]
 mod unit_tests {
 	use super::*;
 	use num_bigint::BigUint;
-
-	#[test]
-	fn test_0x1_0000_0000_0000_0003() {
-		test_divisor_128(0x1_0000_0000_0000_0003);
-	}
 
 	#[test]
 	fn test_divide_128_by_64() {
@@ -499,12 +492,17 @@ mod unit_tests {
 		}
 	}
 
-	// divides a 128-bit number by a 64-bit divisor, returning the quotient as a 64-bit number. Panics if the quotient doesn't fit in a 64-bit number
+	// divides a 128-bit number by a 64-bit divisor, returning the quotient as a 64-bit number. Panics if the
+	// quotient doesn't fit in a 64-bit number
 	fn divide_128_by_64_helper(numerator: u128, divisor: u64) -> u64 {
-		// Assert that the upper half of the numerator is less than the denominator. This will guarantee that the quotient fits inside the numerator.
-		// Sadly this will give us some false negatives! TODO: Find a quick test we can do that doesn't have false negatives
-		// false negative example: numerator = u64::MAX * u64::MAX / u64::MAX
-		assert!(divisor > (numerator >> 64) as u64, "The numerator is too large for the denominator; the quotient might not fit inside a u64.");
+		// Assert that the upper half of the numerator is less than the denominator. This will guarantee that the
+		// quotient fits inside the numerator.
+		// Sadly this will give us some false negatives! TODO: Find a quick test we can do that doesn't have false
+		// negatives false negative example: numerator = u64::MAX * u64::MAX / u64::MAX
+		assert!(
+			divisor > (numerator >> 64) as u64, 
+			"The numerator is too large for the denominator; the quotient might not fit inside a u64."
+		);
 
 		if divisor <= U32_MAX {
 			return divide_128_by_32_helper(numerator, divisor as u32);
@@ -521,12 +519,18 @@ mod unit_tests {
 		let numerator_mid : u64 = (shifted_numerator >> 32) as u32 as u64;
 		let numerator_lo : u64 = shifted_numerator as u32 as u64;
 
-		// we're essentially going to do a long division algorithm with 2 divisions, one on numerator_hi << 32 | numerator_mid, and the second on the remainder of the first | numerator_lo
-		// but numerator_hi << 32 | numerator_mid is a 96-bit number, and we only have 64 bits to work with. so instead we split the divisor into 2 chunks, and divde by the upper chunk, and then check against the lower chunk in a while loop
+		// we're essentially going to do a long division algorithm with 2 divisions, one on
+		// numerator_hi << 32 | numerator_mid, and the second on the remainder of the first | numerator_lo
+		// but numerator_hi << 32 | numerator_mid is a 96-bit number, and we only have 64 bits to work with. so
+		// instead we split the divisor into 2 chunks, and divde by the upper chunk, and then check against the
+		// lower chunk in a while loop
 
 		// step 1: divide the top chunk of the numerator by the divisor
-		// IDEALLY, we would divide (numerator_hi << 32) | numerator_mid by shifted_divisor, but that would require a 128-bit numerator, which is the whole thing we're trying to avoid
-		// so instead we're going to split the second division into two sub-phases. in 1a, we divide numerator_hi by divisor_hi, and then in 1b we decrement the quotient to account for the fact that it'll be smaller when you take divisor_lo into account
+		// IDEALLY, we would divide (numerator_hi << 32) | numerator_mid by shifted_divisor, but that would require
+		// a 128-bit numerator, which is the whole thing we're trying to avoid
+		// so instead we're going to split the second division into two sub-phases. in 1a, we divide numerator_hi
+		// by divisor_hi, and then in 1b we decrement the quotient to account for the fact that it'll be smaller
+		// when you take divisor_lo into account
 
 		// keep in mind that for all of step 2, the full numerator we're using will be
 		// complete_first_numerator  = (numerator_midbits << 32) | numerator_mid
@@ -535,30 +539,41 @@ mod unit_tests {
 		let mut quotient_hi = core::cmp::min(numerator_hi / divisor_hi, U32_MAX);
 		let mut partial_remainder_hi = numerator_hi - quotient_hi * divisor_hi;
 
-		// step 1b: we know sort of what the quotient is, but it's slightly too large because it doesn't account for divisor_lo, nor numerator_mid, so decrement the quotient until it fits
+		// step 1b: we know sort of what the quotient is, but it's slightly too large because it doesn't account
+		// for divisor_lo, nor numerator_mid, so decrement the quotient until it fits
 		// note that if we do some algebra on the condition in this while loop,
 		// ie "quotient_hi * divisor_lo > (partial_remainder_hi << 32) | numerator_mid"
-		// we end up getting "quotient_hi * shifted_divisor < (numerator_midbits << 32) | numerator_mid". remember that the right side of the inequality sign is complete_first_numerator from above.
-		// which deminstrates that we're decrementing the quotient until the quotient multipled by the complete divisor is less than the complete numerator
-		while partial_remainder_hi <= U32_MAX && quotient_hi * divisor_lo > (partial_remainder_hi << 32) | numerator_mid {
+		// we end up getting "quotient_hi * shifted_divisor < (numerator_midbits << 32) | numerator_mid". remember
+		// that the right side of the inequality sign is complete_first_numerator from above.
+		// which deminstrates that we're decrementing the quotient until the quotient multipled by the complete
+		// divisor is less than the complete numerator
+		while partial_remainder_hi <= U32_MAX && 
+			quotient_hi * divisor_lo > (partial_remainder_hi << 32) | numerator_mid 
+		{
 			quotient_hi -= 1;
 			partial_remainder_hi += divisor_hi;
 		}
 
-		// step 2: Divide the bottom part of the numerator. We're going to have the same problem as step 1, where we want the numerator to be a 96-bit number, so again we're going to split it into 2 substeps
+		// step 2: Divide the bottom part of the numerator. We're going to have the same problem as step 1, where
+		// we want the numerator to be a 96-bit number, so again we're going to split it into 2 substeps
 		// the full numeratoe for step 3 will be:
 		// complete_second_numerator = (first_division_remainder << 32) | numerator_lo
 
 		// step 2a: divide the upper part of the lower numerator by the upper part of the divisor
-		// To get the numerator, complate the calculation of the full remainder by subtracing the quotient times the lower bits of the divisor
+		// To get the numerator, complate the calculation of the full remainder by subtracing the quotient times
+		// the lower bits of the divisor
 		// TODO: a warpping subtract is necessary here. why does this work, and why is it necessary?
-		let full_remainder_hi = ((partial_remainder_hi << 32) | numerator_mid).wrapping_sub(quotient_hi * divisor_lo);
+		let full_remainder_hi = 
+			((partial_remainder_hi << 32) | numerator_mid).wrapping_sub(quotient_hi * divisor_lo);
 
 		let mut quotient_lo = core::cmp::min(full_remainder_hi / divisor_hi, U32_MAX);
 		let mut partial_remainder_lo = full_remainder_hi - quotient_lo * divisor_hi;
 
-		// step 2b: just like step 1b, decrement the final quotient until it's correctr when accounting for the full divisor
-		while partial_remainder_lo <= U32_MAX && quotient_lo * divisor_lo > (partial_remainder_lo << 32) | numerator_lo {
+		// step 2b: just like step 1b, decrement the final quotient until it's correctr when accounting for the
+		// full divisor
+		while partial_remainder_lo <= U32_MAX && 
+			quotient_lo * divisor_lo > (partial_remainder_lo << 32) | numerator_lo 
+		{
 			quotient_lo -= 1;
 			partial_remainder_lo += divisor_hi;
 		}
@@ -567,12 +582,17 @@ mod unit_tests {
 		(quotient_hi << 32) | quotient_lo
 	}
 
-	// Same as divide_128_by_64_into_64, but optimized for scenarios where the divisor fits in a u32. Still panics if the quotient doesn't fit in a u64
+	// Same as divide_128_by_64_into_64, but optimized for scenarios where the divisor fits in a u32. Still panics
+	// if the quotient doesn't fit in a u64
 	fn divide_128_by_32_helper(numerator: u128, divisor: u32) -> u64 {
-		// Assert that the upper half of the numerator is less than the denominator. This will guarantee that the quotient fits inside the numerator.
-		// Sadly this will give us some false negatives! TODO: Find a quick test we can do that doesn't have false negatives
-		// false negative example: numerator = u64::MAX * u64::MAX / u64::MAX
-		assert!(divisor as u64 > (numerator >> 64) as u64, "The numerator is too large for the denominator; the quotient might not fit inside a u64.");
+		// Assert that the upper half of the numerator is less than the denominator. This will guarantee that the
+		// quotient fits inside the numerator.
+		// Sadly this will give us some false negatives! TODO: Find a quick test we can do that doesn't have false
+		// negatives false negative example: numerator = u64::MAX * u64::MAX / u64::MAX
+		assert!(
+			divisor as u64 > (numerator >> 64) as u64, 
+			"The numerator is too large for the denominator; the quotient might not fit inside a u64."
+		);
 
 		let shift_size = divisor.leading_zeros();
 		let shifted_divisor = (divisor << shift_size) as u64;
@@ -582,12 +602,18 @@ mod unit_tests {
 		let numerator_hi : u64 = (shifted_numerator >> 64) as u64;
 		let numerator_mid : u64 = (shifted_numerator >> 32) as u32 as u64;
 
-		// we're essentially going to do a long division algorithm with 2 divisions, one on numerator_hi << 32 | numerator_mid, and the second on the remainder of the first | numerator_lo
-		// but numerator_hi << 32 | numerator_mid is a 96-bit number, and we only have 64 bits to work with. so instead we split the divisor into 2 chunks, and divde by the upper chunk, and then check against the lower chunk in a while loop
+		// we're essentially going to do a long division algorithm with 2 divisions, one on
+		// numerator_hi << 32 | numerator_mid, and the second on the remainder of the first | numerator_lo
+		// but numerator_hi << 32 | numerator_mid is a 96-bit number, and we only have 64 bits to work with.
+		// so instead we split the divisor into 2 chunks, and divde by the upper chunk, and then check against the
+		// lower chunk in a while loop
 
 		// step 1: divide the top chunk of the numerator by the divisor
-		// IDEALLY, we would divide (numerator_hi << 32) | numerator_mid by shifted_divisor, but that would require a 128-bit numerator, which is the whole thing we're trying to avoid
-		// so instead we're going to split the second division into two sub-phases. in 1a, we divide numerator_hi by divisor_hi, and then in 1b we decrement the quotient to account for the fact that it'll be smaller when you take divisor_lo into account
+		// IDEALLY, we would divide (numerator_hi << 32) | numerator_mid by shifted_divisor, but that would require
+		// a 128-bit numerator, which is the whole thing we're trying to avoid so instead we're going to split the
+		// second division into two sub-phases. in 1a, we divide numerator_hi by divisor_hi, and then in 1b we
+		// decrement the quotient to account for the fact that it'll be smaller when you take divisor_lo into
+		// account
 
 		// keep in mind that for all of step 1, the full numerator we're using will be
 		// complete_first_numerator  = (numerator_hi << 32) | numerator_mid
@@ -596,27 +622,19 @@ mod unit_tests {
 		let quotient_hi = numerator_hi / shifted_divisor;
 		let remainder_hi = numerator_hi - quotient_hi * shifted_divisor;
 
-		// step 2: Divide the bottom part of the numerator. We're going to have the same problem as step 1, where we want the numerator to be a 96-bit number, so again we're going to split it into 2 substeps
-		// the full numeratoe for step 3 will be:
+		// step 2: Divide the bottom part of the numerator. We're going to have the same problem as step 1, where
+		// we want the numerator to be a 96-bit number, so again we're going to split it into 2 substeps the full
+		// numeratoe for step 3 will be:
 		// complete_second_numerator = (first_division_remainder << 32) | numerator_lo
 
 		// step 2a: divide the upper part of the lower numerator by the upper part of the divisor
-		// To get the numerator, complate the calculation of the full remainder by subtracing the quotient times the lower bits of the divisor
+		// To get the numerator, complate the calculation of the full remainder by subtracing the quotient times
+		// the lower bits of the divisor
 		// TODO: a warpping subtract is necessary here. why does this work, and why is it necessary?
 		let final_numerator = (remainder_hi) << 32 | numerator_mid;
 		let quotient_lo = final_numerator / shifted_divisor;
 
 		// We now have our separate quotients, now we just have to add them together
 		(quotient_hi << 32) | quotient_lo
-	}
-
-	#[test]
-	fn test_trailing_zeros() {
-		let a = [0, 1, 2];
-		assert_eq!(trailing_zeros(&a, 0..a.len()), 0);
-		let b = [0, 1, 0];
-		assert_eq!(trailing_zeros(&b, 0..b.len()), 1);
-		let c = [0, 0];
-		assert_eq!(trailing_zeros(&c, 0..c.len()), 2);
 	}
 }
